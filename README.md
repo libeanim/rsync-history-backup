@@ -20,7 +20,7 @@ There is no need for any additional software just a file browser and a text
 editor are required to access all your data.
 
 And on top of that it is easy to create a front end application, making the
-handling even easier.
+handling even easier. For example [rhb-web](https://github.com/libeanim/rhb-web) which is a web frontend.
 
 ## Why do we need another backup tool?
 
