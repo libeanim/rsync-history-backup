@@ -177,9 +177,9 @@ class RsyncBackup:
     def __get_change_log(self, dryrun_text):
         self.logger.debug(' - [__get_change_log() called.]')
         regs = {
-            'created': '[\>fcd]{2}[\.\+]{9}\|([-A-z/.0-9_ @äüöÄÜÖ]*)|',
-            'deleted': '\*deleting  \|([-A-z/.0-9_ @äüöÄÜÖ]*)|',
-            'changed': '[\>f\.st]{11}\|([-A-z/.0-9_ @äüöÄÜÖ]*)'
+            'created': '^[\>fcd]{2}[\.\+]{9}\|(.*)\|',
+            'deleted': '^\*deleting  \|(.*)\|',
+            'changed': '^[\>f\.st]{11}\|(.*)\|'
         }
         res = {}
         for reg_name in regs.keys():
