@@ -238,7 +238,8 @@ class RsyncBackup:
 
         options = self.hist_options + ['--files-from={}'.format(file_name)]
 
-        out = self._run_rsync(self.source, self.history_time_stamp_dir, options)
+        out = self._run_rsync(self.current_dir, self.history_time_stamp_dir,
+                              options)
         self.logger.debug(" -> files moved.")
         os.close(fd)
         os.remove(file_name)
