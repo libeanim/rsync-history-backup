@@ -14,18 +14,20 @@ def init_action(src, dst):
 
     def get_dir(name):
         while True:
-            d = raw_input("{} directory: ".format(name.capitalize()))
+            d = input("{} directory: ".format(name.capitalize()))
             if not os.path.isdir(d):
                 print("Directory does not exist.", "Try again.")
-        return d
+            else:
+                # Return abspath here?
+                return os.path.abspath(d)
 
     if not src:
         src = get_dir('source')
     if not dst:
         dst = get_dir('destination')
-    name = raw_input("Name: ")
+    name = input("Name: ")
     logger.info("Initializing {}:\nSRC: {}\nDST:{}".format(name, src, dst))
-    os.mkdir(os.path.join(args.src, '.rhb'))
+    os.mkdir(os.path.join(src, '.rhb'))
     logger.debug("Made '.rhb' dir.")
 
     default_config = {
@@ -37,13 +39,13 @@ def init_action(src, dst):
                          "--links", "--super"],
         "source": src,
         "name": name,
-        "history": True
+        "save_history": True
     }
-    with open(os.path.join(args.src, 'rsync-ignore.txt'), 'w+') as rsi:
+    with open(os.path.join(src, 'rsync-ignore.txt'), 'w+') as rsi:
         rsi.write('.rhb/\n')
         rsi.flush()
     logger.debug("Created default 'rsync-ignore.txt'.")
-    with open(os.path.join(args.src, '.rhb', 'config.json'), 'w+') as cfg:
+    with open(os.path.join(src, '.rhb', 'config.json'), 'w+') as cfg:
         json.dump(default_config, cfg)
     logger.debug("Created 'config.json'.")
     logger.info(" -> finished.")
