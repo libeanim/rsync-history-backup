@@ -169,9 +169,8 @@ class RsyncBackup:
             return False
         self.change_log = self.__get_change_log(dryrun)
         self.logger.info(
-            " -> {} changes found.".format(
-                sum([len(self.change_log[it]) for it in self.change_log])
-            ))
+            " -> {} change(s) found.".format(len(dryrun.split('\n')) - 1)
+        )
         return self.change_log
 
     def __get_change_log(self, dryrun_text):
@@ -218,6 +217,10 @@ class RsyncBackup:
         self.logger.debug(' - [_move_to_history() called.]')
         if not self.save_history:
             return False
+        if not len(change_log['deleted'] + change_log['changed']) > 0:
+            self.logger.debug("No files need to be moved to the history.")
+            return True
+
         self.logger.info("Move deleted or changed files to history.")
 
         if not os.path.isdir(self.history_dir):
@@ -247,7 +250,7 @@ class RsyncBackup:
         return out
 
     def _new_backup(self):
-        self.logger.info("Run backup.")
+        self.logger.info("Starting backup:")
         options = self.sync_options + ['--info=progress2']
         out = self._run_rsync(self.source, self.current_dir, options, False)
         self.logger.info(" -> backup finished.")
