@@ -41,7 +41,7 @@ class RsyncBackup:
             self.exclude_option = ['--include=/.rhb/history/',
                                    '--include=/.rhb/log/', '--exclude=/.rhb/*']
         else:
-            self.exclude_option = ['--exclude=.rhb/*']
+            self.exclude_option = ['--exclude=/.rhb/']
         if exclude_file and os.path.isfile(exclude_file):
             self.logger.debug("Using user exclude file.")
             self.exclude_option += ['--exclude-from={}'.format(exclude_file)]
