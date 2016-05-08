@@ -17,10 +17,11 @@ class RsyncBackup:
 
     def __init__(self, source, destination,
                  name=None, rsync_exe='rsync', exclude_file='',
-                 save_history=True, save_dryrun=True,
-                 sync_options=["--recursive", "--update", "--delete", "--owner",
-                               "--group", "--times", "--links", "--safe-links",
-                               "--super", "--one-file-system", "--devices"],
+                 save_history=True, local_history=False,
+                 sync_options=["--recursive", "--update", "--delete",
+                               "--owner", "--group", "--times", "--links",
+                               "--safe-links", "--super", "--one-file-system",
+                               "--devices"],
                  hist_options=["--update", "--owner", "--group", "--times",
                                "--links", "--super"]):
         self.time_format = r'%Y-%m-%d %H-%M-%S'
@@ -34,18 +35,22 @@ class RsyncBackup:
         self.destination = os.path.abspath(destination)
         self.name = name if name else os.path.basename(source)
         self.rsync_exe = rsync_exe
+        self.save_history = save_history
+        self.local_history = local_history
+        if self.local_history:
+            self.exclude_option = ['--include=/.rhb/history/',
+                                   '--include=/.rhb/log/', '--exclude=/.rhb/*']
+        else:
+            self.exclude_option = ['--exclude=.rhb/*']
         if exclude_file and os.path.isfile(exclude_file):
             self.logger.debug("Using user exclude file.")
-            self.exclude_option = ['--exclude-from={}'.format(exclude_file)]
+            self.exclude_option += ['--exclude-from={}'.format(exclude_file)]
         elif os.path.isfile(os.path.join(self.source, 'rsync-ignore.txt')):
             self.logger.debug("Default exclude file found.")
-            self.exclude_option = ['--exclude-from={}'.format(
+            self.exclude_option += ['--exclude-from={}'.format(
                 os.path.join(self.source, 'rsync-ignore.txt'))]
         else:
             self.logger.debug("No exclude file found.")
-            self.exclude_option = []
-        self.save_history = save_history
-        self.save_dryrun = save_dryrun
         self.sync_options = sync_options + self.exclude_option
         self.hist_options = hist_options
         self.time_stamp = None
@@ -78,17 +83,24 @@ class RsyncBackup:
     @property
     def current_dir(self):
         """Returns the path to the backups current directory."""
-        return os.path.join(self.destination, 'current', self.name)
+        # return os.path.join(self.destination, 'current', self.name)
+        return os.path.join(self.destination, self.name)
 
     @property
     def history_dir(self):
         """Returns the path to the backups history directory."""
-        return os.path.join(self.destination, 'history', self.name)
+        # return os.path.join(self.destination, 'history', self.name)
+        if self.local_history:
+            return os.path.join(self.source, '.rhb', 'history')
+        return os.path.join(self.destination, self.name, '.rhb', 'history')
 
     @property
     def log_dir(self):
         """Returns the path to the backups log directory."""
-        return os.path.join(self.destination, 'log', self.name)
+        # return os.path.join(self.destination, 'log', self.name)
+        if self.local_history:
+            return os.path.join(self.source, '.rhb', 'log')
+        return os.path.join(self.destination, self.name, '.rhb', 'log')
 
     @property
     def local_settings_dir(self):
@@ -154,8 +166,8 @@ class RsyncBackup:
         self.logger.info("Looking for changes.")
         if not os.path.exists(self.current_dir):
             os.makedirs(self.current_dir)
-        options = ['--dry-run', '--itemize-changes', '--out-format="%i|%n|"'] +\
-            self.sync_options
+        options = ['--dry-run', '--itemize-changes', '--out-format="%i|%n|"'] \
+            + self.sync_options
 
         self.time_stamp = datetime.now().strftime(self.time_format)
         dryrun = self._run_rsync(self.source, self.current_dir, options)
@@ -176,9 +188,9 @@ class RsyncBackup:
     def __get_change_log(self, dryrun_text):
         self.logger.debug(' - [__get_change_log() called.]')
         regs = {
-            'created': '^[\>fcd]{2}[\.\+]{9}\|(.*)\|',
-            'deleted': '^\*deleting  \|(.*)\|',
-            'changed': '^[\>f\.st]{11}\|(.*)\|'
+            'created': '[\>fcd]{2}[\.\+]{9}\|(.*)\|',
+            'deleted': '\*deleting  \|(.*)\|',
+            'changed': '[\>f\.st]{11}\|(.*)\|'
         }
         res = {}
         for reg_name in regs.keys():
@@ -191,26 +203,31 @@ class RsyncBackup:
         self.logger.debug(' - [_save_file_logs() called.]')
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
-        if self.save_dryrun and self.dryrun:
-            file_name = '{}.{}'.format(self.time_stamp, 'dryrun')
-            fl = open(os.path.join(self.log_dir, file_name), 'w+')
-            fl.write(self.dryrun)
-            fl.flush()
-            fl.close()
-        else:
-            self.logger.warning(
-                "Not saving the 'dryrun' file might cause problems.")
 
-        for k in change_log.keys():
-            if not change_log[k]:
-                continue
+        file_name = "{}.json".format(self.time_stamp)
+        json.dump(change_log,
+                  open(os.path.join(self.log_dir, file_name), 'w'))
 
-            file_name = '{}.{}'.format(self.time_stamp, k)
-            fl = open(os.path.join(self.log_dir, file_name), 'w+')
-            fl.write('\n'.join(change_log[k]))
-            fl.flush()
-            fl.close()
-        self.logger.debug("Log files saved.")
+        # if self.save_dryrun and self.dryrun:
+        #     file_name = '{}.{}'.format(self.time_stamp, 'dryrun')
+        #     fl = open(os.path.join(self.log_dir, file_name), 'w+')
+        #     fl.write(self.dryrun)
+        #     fl.flush()
+        #     fl.close()
+        # else:
+        #     self.logger.warning(
+        #         "Not saving the 'dryrun' file might cause problems.")
+        #
+        # for k in change_log.keys():
+        #     if not change_log[k]:
+        #         continue
+        #
+        #     file_name = '{}.{}'.format(self.time_stamp, k)
+        #     fl = open(os.path.join(self.log_dir, file_name), 'w+')
+        #     fl.write('\n'.join(change_log[k]))
+        #     fl.flush()
+        #     fl.close()
+        self.logger.debug("Log file saved.")
         return True
 
     def _move_to_history(self, change_log):
