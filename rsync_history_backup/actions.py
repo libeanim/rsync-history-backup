@@ -5,6 +5,7 @@ import json
 from rsync_history_backup.basic import RsyncBackup
 from rsync_history_backup.analyzer import BackupInfo
 from rsync_history_backup.utils import bcolors
+import shutil
 
 
 def init_action(src, dst):
@@ -78,6 +79,9 @@ def _init_rhb(src, dst, cfg, local_dir):
                         "be in a directory with a rhb local directory.")
         sys.exit(1)
     logger.debug("rhb: src={}; dst={}".format(rhb.source, rhb.destination))
+    service_info = _get_service_info(local_dir)
+    if service_info:
+        map(rhb.add_exclude_path, service_info['dropped'])
     return rhb
 
 
@@ -90,9 +94,6 @@ def _get_service_info(local_dir):
 
 def backup_action(src, dst, cfg, local_dir):
     rhb = _init_rhb(src, dst, cfg, local_dir)
-    service_info = _get_service_info(local_dir)
-    if service_info:
-        map(rhb.add_exclude_path, service_info['dropped'])
     return rhb.run_backup()
 
 
@@ -175,13 +176,29 @@ def versions_action(config, local_dir, path, show=False):
     return True
 
 
+def drop_action(local_dir, path):
+    logger = logging.getLogger('rhb.drop_action()')
+    logger.critical('This function is untested.')
+    sys.exit(1)
+    rhb = _init_rhb(None, None, None, local_dir)
+    path = os.path.join(local_dir, path)
+    shutil.rmtree(path)
+    os.system('ln -s {} {}'.format(os.path.join(rhb.current_dir, path),
+                                   os.path.join(local_dir, path)))
+    service_info = _get_service_info(local_dir)
+    if not service_info:
+        service_info = dict(dropped=[])
+    service_info[dropped].append('/' + path)
+
+
 def get_action(local_dir, path, version=None):
-    if local_dir:
-        logger.debug("Local settings found: {}".format(local_dir))
-        rhb = RsyncBackup.load_config_file(
-            open(os.path.join(local_dir, '.rhb', 'config.json'), 'r')
-        )
-    else:
-        logger.critical("You have to be in a directory with " +
-                        "a rhb local directory.")
-        sys.exit(1)
+    rhb = _init_rhb(None, None, None, local_dir)
+    # if local_dir:
+    #     logger.debug("Local settings found: {}".format(local_dir))
+    #     rhb = RsyncBackup.load_config_file(
+    #         open(os.path.join(local_dir, '.rhb', 'config.json'), 'r')
+    #     )
+    # else:
+    #     logger.critical("You have to be in a directory with " +
+    #                     "a rhb local directory.")
+    #     sys.exit(1)
