@@ -51,7 +51,7 @@ class RsyncBackup:
                 os.path.join(self.source, 'rsync-ignore.txt'))]
         else:
             self.logger.debug("No exclude file found.")
-        self.sync_options = sync_options + self.exclude_option
+        self.sync_options = sync_options
         self.hist_options = hist_options
         self.time_stamp = None
         self.dryrun = None
@@ -117,6 +117,9 @@ class RsyncBackup:
                              'This is a bug and should happen automatically.')
         return os.path.join(self.history_dir, self.time_stamp)
 
+    def add_exclude_path(self, path):
+        self.exclude_option += ["--exclude={}".format(path)]
+
     def _run_rsync(self, source, destination, options=[], check_output=True):
         """Run rsync.
 
@@ -167,7 +170,7 @@ class RsyncBackup:
         if not os.path.exists(self.current_dir):
             os.makedirs(self.current_dir)
         options = ['--dry-run', '--itemize-changes', '--out-format="%i|%n|"'] \
-            + self.sync_options
+            + self.sync_options + self.exclude_option
 
         self.time_stamp = datetime.now().strftime(self.time_format)
         dryrun = self._run_rsync(self.source, self.current_dir, options)
@@ -268,7 +271,8 @@ class RsyncBackup:
 
     def _new_backup(self):
         self.logger.info("Starting backup:")
-        options = self.sync_options + ['--info=progress2']
+        options = self.sync_options + self.exclude_option \
+            + ['--info=progress2']
         out = self._run_rsync(self.source, self.current_dir, options, False)
         self.logger.info(" -> backup finished.")
         return out

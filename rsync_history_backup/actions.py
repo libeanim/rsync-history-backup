@@ -81,8 +81,18 @@ def _init_rhb(src, dst, cfg, local_dir):
     return rhb
 
 
+def _get_service_info(local_dir):
+    file_name = os.path.join(local_dir, '.rhb', 'service.json')
+    if os.path.isfile(file_name):
+        return json.load(open(file_name, 'r'))
+    return None
+
+
 def backup_action(src, dst, cfg, local_dir):
     rhb = _init_rhb(src, dst, cfg, local_dir)
+    service_info = _get_service_info(local_dir)
+    if service_info:
+        map(rhb.add_exclude_path, service_info['dropped'])
     return rhb.run_backup()
 
 
