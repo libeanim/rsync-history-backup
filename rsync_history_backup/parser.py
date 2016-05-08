@@ -47,7 +47,7 @@ parser_init = subparsers.add_parser('init', help='initialize rhb environment.',
                                     parents=[default_parser])
 parser_init.set_defaults(which='init')
 # parser_init.add_argument("path", nargs='?', type=str, default='.',
-#                          help="location where the action should be executed.")
+#                         help="location where the action should be executed.")
 parser_init.add_argument("--dst", "-d", action="store", metavar="FOLDER",
                          help="path to the destionation directory.")
 parser_init.add_argument("--src", "-s", action="store", metavar="FOLDER",
@@ -57,7 +57,7 @@ parser_bkup = subparsers.add_parser('backup', help='start a backup.',
                                     parents=[default_parser])
 parser_bkup.set_defaults(which='backup')
 # parser_bkup.add_argument("path", nargs='?', type=str, default='.',
-#                          help="location where the action should be executed.")
+#                         help="location where the action should be executed.")
 parser_bkup.add_argument("--dst", "-d", action="store", metavar="FOLDER",
                          help="path to the destionation directory.")
 parser_bkup.add_argument("--src", "-s", action="store", metavar="FOLDER",

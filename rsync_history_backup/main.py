@@ -68,7 +68,7 @@ def run(sys_args):
             logger.critical("RHB already initialized: '{}'.".format(local_dir))
             raise SystemExit("Exit.")
         elif args.path:
-            logger.warning("Setting an extra path has no effect. " +
+            logger.warning("Setting an extra path has no effect. "
                            "Use '--src' and '--dst' flag instead.")
         init_action(args.src, args.dst)
 
@@ -79,7 +79,7 @@ def run(sys_args):
                     os.path.join(local_dir, ".rhb", "rhb.log")
                 ))
         if args.path != '.' and (args.src or args.dst or args.config):
-            logger.warning("Adding an additional path has no effect if " +
+            logger.warning("Adding an additional path has no effect if "
                            "'--src' and '--dst' or '--config' are set.")
 
         if args.dryrun:
@@ -94,5 +94,5 @@ def run(sys_args):
     #     get_action(local_dir, args.path, args.version)
 
     else:
-        raise NotImplementedError("Sorry. Your requested action is apparently" +
+        raise NotImplementedError("Sorry. Your requested action is apparently"
                                   "not implemented. :/")
